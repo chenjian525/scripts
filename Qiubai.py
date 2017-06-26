@@ -5,15 +5,15 @@ from urllib import parse
 
 class QiuBai(object):
     def __init__(self):
+        self.haeders = {
+            'User-Agent': ('Mozilla/5.0 (Macintosh; Intel Mac OS X 10_11_4) '
+                           'AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.36')
+        }
         self.queue = []
         self.session = requests.session()
         self.start_url = 'https://www.qiushibaike.com/text'
         self.num = 1
-        self.user_id = {'s': 4993999}
-        self.headers = {
-            'User-Agent': ('Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 '
-                           '(KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.36')
-        }
+        self.user_id = {'s': 4994802}
 
     @staticmethod
     def url_concat(url, args=None):
@@ -28,17 +28,22 @@ class QiuBai(object):
         return self.url_concat(url, args=self.user_id)
 
     def fetch_url(self, url):
-        resp = self.session.get(url, headers=self.headers)
+        print('fetch url: ', url)
+        resp = self.session.get(url)
         self.num += 1
+        self.num = self.num if self.num < 36 else 1
         return resp.text
 
     def parse_resp(self, text):
         tree = etree.HTML(text)
-        all_posts = tree.xpath('//div[@class="content"]/span')
-        self.queue.extend(all_posts)
+        all_posts = tree.xpath('//div[starts-with(@class, "article block")]')
+        for post in all_posts:
+            if int(post.xpath('.//i[@class="number"]/text()')[0]) > 200 and not post.xpath('.//span[@class="contentForAll"]'):
+                self.queue.append('\n'.join(post.xpath('.//div[@class="content"]//span/text()')))
 
     def start(self):
         url = self.start_url if self.num == 1 else self.get_next_url()
+
         resp_text = self.fetch_url(url)
         self.parse_resp(resp_text)
 
@@ -55,7 +60,6 @@ if __name__ == '__main__':
         word = input()
         if word.upper() == 'Q':
             break
-        el = qiubai.queue.pop()
-        print('\n'.join(el.xpath('.//text()')))
+        print(qiubai.queue.pop())
         qiubai.make_sure_20()
     print('输出停止。')
