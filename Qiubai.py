@@ -49,7 +49,7 @@ class QiuBai(object):
 
     def make_sure_20(self):
         while len(self.queue) < 20:
-            qiubai.start()
+            self.start()
 
 
 if __name__ == '__main__':
